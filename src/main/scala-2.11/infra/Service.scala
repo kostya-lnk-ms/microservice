@@ -17,7 +17,7 @@ import workflow.WorkflowManager._
 import scala.util.{Failure, Success}
 
 final case class WorkflowReq(number_of_steps: Int)
-final case class WorkflowIdResp(workflow_id: String)
+final case class WorkflowIdReqResp(workflow_id: String)
 final case class WorkflowExecId(workflow_execution_id: String)
 final case class ExecutionStatus(finished: Boolean)
 
@@ -53,15 +53,15 @@ trait Service {
   implicit val materializer = ActorMaterializer()
   implicit val executionContext = system.dispatcher
 
-  def wfManager: WorkflowManager
-
   implicit val wfReqFormat = jsonFormat1(WorkflowReq)
-  implicit val wfIdFormat = jsonFormat1(WorkflowIdResp)
+  implicit val wfIdFormat = jsonFormat1(WorkflowIdReqResp)
   implicit val wfExecIdFormat = jsonFormat1(WorkflowExecId)
   implicit val execStatusFormat = jsonFormat1(ExecutionStatus)
 
   final val WORKFLOWS = "workflows"
   final val EXECUTIONS = "executions"
+
+  def wfManager: WorkflowManager
 
    private def errorCode(err: Throwable): ToResponseMarshallable = err match {
     case _ : NoSuchElementException => StatusCodes.NotFound
@@ -86,7 +86,7 @@ trait Service {
         entity(as[WorkflowReq]) { wfReq =>
           val saved = Do.createWorkflow(wfManager, wfReq.number_of_steps)
           onSuccess(saved) { done =>
-            complete( (StatusCodes.Created, WorkflowIdResp(done.get.id)) )
+            complete( (StatusCodes.Created, WorkflowIdReqResp(done.get.id)) )
           }
         }
       }} ~

@@ -94,7 +94,6 @@ class WorkflowManagerTest extends FunSuite {
   }
 
   test("testNextExecutionStep") {
-    import WorkflowManager._
     val wfManager = WorkflowManager()
     val wfAndExecs = genExecutions(wfManager)
     execAll(wfManager, wfAndExecs)

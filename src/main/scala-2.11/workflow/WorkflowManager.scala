@@ -1,15 +1,13 @@
 package workflow
 
-import java.time.temporal.ChronoUnit
 import java.time.{ZoneId, ZonedDateTime}
 import java.util.{NoSuchElementException, UUID}
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.{Consumer, IntUnaryOperator}
 
-import akka.actor.{Actor, ActorSystem, Props}
+import akka.actor.ActorSystem
 import scala.collection.concurrent.TrieMap
-import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
 import scala.language.postfixOps
 import scala.concurrent.duration.{Duration, FiniteDuration}
@@ -75,9 +73,7 @@ object WorkflowManager {
 
     private[workflow] def forExecution[T](execId: ExecutionId)(f: Execution=>T ) : Try[T] = {
       executions.get(execId) match {
-        case None => {
-          Failure(new NoSuchElementException(s"Execution ID $execId not found"))
-        }
+        case None => Failure(new NoSuchElementException(s"Execution ID $execId not found"))
         case Some(a) => Success( f(a) )
       }
     }
@@ -106,45 +102,7 @@ object WorkflowManager {
   }
 }
 
-trait Cleanup {
-  manager: WorkflowManager with WorkflowManager.CleanupParams =>
 
-  implicit def ec: ExecutionContext
-  def actorSystem : ActorSystem
-
-  trait Cleaner {
-    def stop(): Unit
-  }
-
-  private case object Tick
-  private case object Stop
-
-  private class CleanupScheduler extends Actor {
-    import scala.concurrent.duration._
-
-    val ticker =
-      context.system.scheduler.schedule(1 milli, manager.interval, self, Tick)
-
-    override def postStop() = ticker.cancel()
-
-    def receive = {
-      case Tick =>
-        val cutOff = ZonedDateTime.now(ZoneId.of("UTC")).minus( manager.olderThan.toMillis, ChronoUnit.MILLIS )
-        manager.cleanup(cutOff)
-      case Stop =>
-        context.stop(self)
-    }
-  }
-
-  def startCleanup: Cleaner = {
-    new Cleaner {
-      val ref = actorSystem.actorOf(Props(new CleanupScheduler))
-      def stop(): Unit = {
-        ref ! Stop
-      }
-    }
-  }
-}
 
 class WorkflowManager {
   import WorkflowManager._
@@ -160,7 +118,7 @@ class WorkflowManager {
   }
 
   def cleanup(olderThan: ZonedDateTime): Unit = {
-    registry.forEachValue(8192, new Consumer[Workflow] {
+    registry.forEachValue(1024, new Consumer[Workflow] {
       override def accept(t: Workflow) = t.cleanup(olderThan)
     } )
   }
@@ -180,8 +138,8 @@ class WorkflowManager {
   }
 
   def nextExecutionStep(wfId: WorkflowId, executionId: ExecutionId ): Try[Int] = {
-    val r = forWorkflow(wfId) { _.forExecution(executionId) { exec=> exec.nextStep} }
-    r.flatten.flatten
+    val r = forWorkflow(wfId) { _.forExecution(executionId) { exec=> exec.nextStep} flatten }
+    r.flatten
   }
 
   def isFinished(wfId: WorkflowId, executionId: ExecutionId) : Try[Boolean] = {

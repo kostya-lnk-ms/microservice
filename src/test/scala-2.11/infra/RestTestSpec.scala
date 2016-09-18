@@ -33,7 +33,7 @@ class RestTestSpec extends WordSpec with Matchers with ScalatestRouteTest  {
       }
     }
 
-    def createExecution(wfId: WorkflowIdResp)(checks: => Unit) = {
+    def createExecution(wfId: WorkflowIdReqResp)(checks: => Unit) = {
       Post(s"/${svc.WORKFLOWS}/${wfId.workflow_id}/${svc.EXECUTIONS}") ~> rt ~> check {
         mediaType === MediaTypes.`application/json`
         checks
@@ -46,14 +46,14 @@ class RestTestSpec extends WordSpec with Matchers with ScalatestRouteTest  {
       }
     }
 
-    def nextStep(wfId: WorkflowIdResp, execId: WorkflowExecId)(checks: => Unit) = {
+    def nextStep(wfId: WorkflowIdReqResp, execId: WorkflowExecId)(checks: => Unit) = {
       Put(s"/${svc.WORKFLOWS}/${wfId.workflow_id}/${svc.EXECUTIONS}/${execId.workflow_execution_id}") ~> rt ~> check {
         mediaType === MediaTypes.`application/json`
         checks
       }
     }
 
-    def getState(wfId: WorkflowIdResp, execId: WorkflowExecId)(checks: => Unit) = {
+    def getState(wfId: WorkflowIdReqResp, execId: WorkflowExecId)(checks: => Unit) = {
       Get(s"/${svc.WORKFLOWS}/${wfId.workflow_id}/${svc.EXECUTIONS}/${execId.workflow_execution_id}") ~> rt ~> check {
         mediaType === MediaTypes.`application/json`
         checks
@@ -99,7 +99,7 @@ class RestTestSpec extends WordSpec with Matchers with ScalatestRouteTest  {
     s"Post'ing to ${svc.WORKFLOWS}/<workflow_id>/${svc.EXECUTIONS} should create an execution" in {
       val wfId = createWorkflow(2) (createdCheck _)
       createExecution(wfId.get) (createdCheck _)
-      createExecution(WorkflowIdResp("zebra")) (notFoundCheck _)
+      createExecution(WorkflowIdReqResp("zebra")) (notFoundCheck _)
       }
 
     s"Put'ing to ${svc.WORKFLOWS}/<workflow_id>/${svc.EXECUTIONS}/<workflow_execution_id> should increment step" in {
@@ -107,7 +107,7 @@ class RestTestSpec extends WordSpec with Matchers with ScalatestRouteTest  {
       val execId = createExecution(wfId.get) (createdCheck _)
       nextStep(wfId.get, execId.get) (noContentCheck _)
 
-      nextStep(WorkflowIdResp("zebra"), execId.get) (notFoundCheck _)
+      nextStep(WorkflowIdReqResp("zebra"), execId.get) (notFoundCheck _)
       nextStep(wfId.get, WorkflowExecId("pont")) (notFoundCheck _)
 
       nextStep(wfId.get, execId.get) (badRequestCheck _)
@@ -122,7 +122,7 @@ class RestTestSpec extends WordSpec with Matchers with ScalatestRouteTest  {
       val r2 = getState(wfId.get, execId.get) (OKCheck _)
       r2.get.finished === true
 
-      getState(WorkflowIdResp("zebra"), execId.get) (notFoundCheck _)
+      getState(WorkflowIdReqResp("zebra"), execId.get) (notFoundCheck _)
       getState(wfId.get, WorkflowExecId("pont")) (notFoundCheck _)
     }
 
