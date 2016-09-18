@@ -14,7 +14,6 @@ import spray.json.DefaultJsonProtocol._
 import scala.concurrent.{ExecutionContext, Future}
 import workflow.WorkflowManager
 import workflow.WorkflowManager._
-
 import scala.util.{Failure, Success}
 
 final case class WorkflowReq(number_of_steps: Int)

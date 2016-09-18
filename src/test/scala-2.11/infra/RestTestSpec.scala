@@ -7,6 +7,7 @@ import org.scalatest.{Matchers, WordSpec}
 import spray.json.{JsonParser, ParserInput}
 import workflow.WorkflowManager
 
+
 class RestTestSpec extends WordSpec with Matchers with ScalatestRouteTest  {
 
   private def httpJsonReq(v: spray.json.JsValue) = HttpEntity(MediaTypes.`application/json`, v.toString)

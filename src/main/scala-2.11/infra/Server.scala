@@ -5,7 +5,6 @@ import workflow.WorkflowManager
 
 import scala.io.StdIn
 
-
 object Server extends Service {
 
   override val wfManager = WorkflowManager(WorkflowManager.DoCleanup)

@@ -7,9 +7,9 @@ import akka.actor.ActorSystem
 import org.scalatest.FunSuite
 import workflow.WorkflowManager.Workflow.ExecutionId
 import workflow.WorkflowManager.{CleanupParams, WorkflowId}
-
 import scala.annotation.tailrec
 import scala.concurrent.duration.{Duration, FiniteDuration}
+
 
 class WorkflowManagerTest extends FunSuite {
 
